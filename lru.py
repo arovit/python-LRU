@@ -4,17 +4,6 @@ from collections import OrderedDict
 from time import time
 
 def lru_cache_function(max_size=1024, expiration=15*60):
-    """
-    >>> @lru_cache_function(3, 1)
-    ... def f(x):
-    ...    print "Calling f(" + str(x) + ")"
-    ...    return x
-    >>> f(3)
-    Calling f(3)
-    3
-    >>> f(3)
-    3
-    """
     def wrapper(func):
         return LRUCachedFunction(func, LRUCacheDict(max_size, expiration))
     return wrapper
@@ -22,25 +11,6 @@ def lru_cache_function(max_size=1024, expiration=15*60):
 
 class LRUCacheDict(object):
     """ A dictionary-like object, supporting LRU caching semantics.
-
-    >>> d = LRUCacheDict(max_size=3, expiration=3)
-    >>> d['foo'] = 'bar'
-    >>> d['foo']
-    'bar'
-    >>> import time
-    >>> time.sleep(4) # 4 seconds > 3 second cache expiry of d
-    >>> d['foo']
-    Traceback (most recent call last):
-        ...
-    KeyError: 'foo'
-    >>> d['a'] = 'A'
-    >>> d['b'] = 'B'
-    >>> d['c'] = 'C'
-    >>> d['d'] = 'D'
-    >>> d['a'] # Should return value error, since we exceeded the max cache size
-    Traceback (most recent call last):
-        ...
-    KeyError: 'a'
     """
     def __init__(self, max_size=1024, expiration=15*60):
         self.max_size = max_size
@@ -54,42 +24,11 @@ class LRUCacheDict(object):
         return len(self.__values)
 
     def clear(self):
-        """
-        Clears the dict.
-
-        >>> d = LRUCacheDict(max_size=3, expiration=1)
-        >>> d['foo'] = 'bar'
-        >>> d['foo']
-        'bar'
-        >>> d.clear()
-        >>> d['foo']
-        Traceback (most recent call last):
-        ...
-        KeyError: 'foo'
-        """
         self.__values.clear()
         self.__expire_times.clear()
         self.__access_times.clear()
 
     def has_key(self, key):
-        """
-        This method should almost NEVER be used. The reason is that between the time
-        has_key is called, and the key is accessed, the key might vanish.
-
-        You should ALWAYS use a try: ... except KeyError: ... block.
-
-        >>> d = LRUCacheDict(max_size=3, expiration=1)
-        >>> d['foo'] = 'bar'
-        >>> d['foo']
-        'bar'
-        >>> import time
-        >>> if d.has_key('foo'):
-        ...    time.sleep(2) #Oops, the key 'foo' is gone!
-        ...    d['foo']
-        Traceback (most recent call last):
-        ...
-        KeyError: 'foo'
-        """
         return self.__values.has_key(key)
 
     def __setitem__(self, key, value):
@@ -132,36 +71,10 @@ class LRUCacheDict(object):
 
 class LRUCachedFunction(object):
     """
-    A memoized function, backed by an LRU cache.
-
     >>> def f(x):
     ...    print "Calling f(" + str(x) + ")"
     ...    return x
     >>> f = LRUCachedFunction(f, LRUCacheDict(max_size=3, expiration=3) )
-    >>> f(3)
-    Calling f(3)
-    3
-    >>> f(3)
-    3
-    >>> import time
-    >>> time.sleep(4) #Cache should now be empty, since expiration time is 3.
-    >>> f(3)
-    Calling f(3)
-    3
-    >>> f(4)
-    Calling f(4)
-    4
-    >>> f(5)
-    Calling f(5)
-    5
-    >>> f(3) #Still in cache, so no print statement. At this point, 4 is the least recently used.
-    3
-    >>> f(6)
-    Calling f(6)
-    6
-    >>> f(4) #No longer in cache - 4 is the least recently used, and there are at least 3 others items in cache [3,4,5,6].
-    Calling f(4)
-    4
 
     """
     def __init__(self, function, cache=None):
@@ -180,7 +93,4 @@ class LRUCachedFunction(object):
             value = self.function(*args, **kwargs)
             self.cache[key] = value
             return value
-
-if __name__ == "__main__":
-    import doctest
-    doctest.testmod()
+   
